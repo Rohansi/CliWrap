@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using CliWrap.Buffered;
 using FluentAssertions;
 using Xunit;
 
@@ -76,5 +77,20 @@ public class ExecutionSpecs
                 // So cast the result to object to avoid the warning.
                 (object)cmd.ExecuteAsync()
         );
+    }
+
+    [Fact(Timeout = 15000)]
+    public async Task I_can_execute_a_command_with_started_callback()
+    {
+        // Arrange
+        var callbackCalled = false;
+        var cmd = Cli.Wrap(Dummy.Program.FilePath)
+            .WithProcessStartedCallback(p => callbackCalled = true);
+
+        // Act
+        await cmd.ExecuteAsync();
+
+        // Assert
+        callbackCalled.Should().BeTrue();
     }
 }

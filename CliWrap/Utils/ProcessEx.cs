@@ -11,24 +11,25 @@ namespace CliWrap.Utils;
 
 internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
 {
-    private readonly Process _nativeProcess = new() { StartInfo = startInfo };
+    public readonly Process NativeProcess = new() { StartInfo = startInfo };
+
     private readonly TaskCompletionSource<object?> _exitTcs =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public int Id => _nativeProcess.Id;
+    public int Id => NativeProcess.Id;
 
     public string Name =>
         // Can't rely on ProcessName because it becomes inaccessible after the process exits
-        Path.GetFileName(_nativeProcess.StartInfo.FileName);
+        Path.GetFileName(NativeProcess.StartInfo.FileName);
 
     // We are purposely using Stream instead of StreamWriter/StreamReader to push the concerns of
     // writing and reading to PipeSource/PipeTarget at the higher level.
 
-    public Stream StandardInput => _nativeProcess.StandardInput.BaseStream;
+    public Stream StandardInput => NativeProcess.StandardInput.BaseStream;
 
-    public Stream StandardOutput => _nativeProcess.StandardOutput.BaseStream;
+    public Stream StandardOutput => NativeProcess.StandardOutput.BaseStream;
 
-    public Stream StandardError => _nativeProcess.StandardError.BaseStream;
+    public Stream StandardError => NativeProcess.StandardError.BaseStream;
 
     // We have to keep track of StartTime ourselves because it becomes inaccessible after the process exits
     // https://github.com/Tyrrrz/CliWrap/issues/93
@@ -38,13 +39,13 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
     // https://github.com/Tyrrrz/CliWrap/issues/93
     public DateTimeOffset ExitTime { get; private set; }
 
-    public int ExitCode => _nativeProcess.ExitCode;
+    public int ExitCode => NativeProcess.ExitCode;
 
     public void Start()
     {
         // Hook up events
-        _nativeProcess.EnableRaisingEvents = true;
-        _nativeProcess.Exited += (_, _) =>
+        NativeProcess.EnableRaisingEvents = true;
+        NativeProcess.Exited += (_, _) =>
         {
             ExitTime = DateTimeOffset.Now;
             _exitTcs.TrySetResult(null);
@@ -53,10 +54,10 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
         // Start the process
         try
         {
-            if (!_nativeProcess.Start())
+            if (!NativeProcess.Start())
             {
                 throw new InvalidOperationException(
-                    $"Failed to start a process with file path '{_nativeProcess.StartInfo.FileName}'. "
+                    $"Failed to start a process with file path '{NativeProcess.StartInfo.FileName}'. "
                         + "Target file is not an executable or lacks execute permissions."
                 );
             }
@@ -66,7 +67,7 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
         catch (Win32Exception ex)
         {
             throw new Win32Exception(
-                $"Failed to start a process with file path '{_nativeProcess.StartInfo.FileName}'. "
+                $"Failed to start a process with file path '{NativeProcess.StartInfo.FileName}'. "
                     + "Target file or working directory doesn't exist, or the provided credentials are invalid.",
                 ex
             );
@@ -86,7 +87,7 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     using var signaler = WindowsSignaler.Deploy();
-                    return signaler.TrySend(_nativeProcess.Id, 0);
+                    return signaler.TrySend(NativeProcess.Id, 0);
                 }
 
                 // On Unix, we can just send the signal to the process directly
@@ -95,7 +96,7 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
                     || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
                 )
                 {
-                    return NativeMethods.Unix.Kill(_nativeProcess.Id, 2) == 0;
+                    return NativeMethods.Unix.Kill(NativeProcess.Id, 2) == 0;
                 }
 
                 // Unsupported platform
@@ -122,9 +123,9 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
     {
         try
         {
-            _nativeProcess.Kill(true);
+            NativeProcess.Kill(true);
         }
-        catch when (_nativeProcess.HasExited)
+        catch when (NativeProcess.HasExited)
         {
             // The process has exited before we could kill it. This is fine.
         }
@@ -146,5 +147,5 @@ internal class ProcessEx(ProcessStartInfo startInfo) : IDisposable
             await _exitTcs.Task.ConfigureAwait(false);
     }
 
-    public void Dispose() => _nativeProcess.Dispose();
+    public void Dispose() => NativeProcess.Dispose();
 }

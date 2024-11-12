@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace CliWrap;
 
@@ -51,4 +53,9 @@ public interface ICommandConfiguration
     /// Pipe target for the standard error stream of the underlying process.
     /// </summary>
     PipeTarget StandardErrorPipe { get; }
+
+    /// <summary>
+    /// Callback to run when the underlying process starts.
+    /// </summary>
+    Action<Process>? ProcessStartedCallback { get; }
 }

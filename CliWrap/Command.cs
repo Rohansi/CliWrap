@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -19,7 +20,8 @@ public partial class Command(
     CommandResultValidation validation,
     PipeSource standardInputPipe,
     PipeTarget standardOutputPipe,
-    PipeTarget standardErrorPipe
+    PipeTarget standardErrorPipe,
+    Action<Process>? processStartedCallback
 ) : ICommandConfiguration
 {
     /// <summary>
@@ -35,7 +37,8 @@ public partial class Command(
             CommandResultValidation.ZeroExitCode,
             PipeSource.Null,
             PipeTarget.Null,
-            PipeTarget.Null
+            PipeTarget.Null,
+            null
         ) { }
 
     /// <inheritdoc />
@@ -66,6 +69,9 @@ public partial class Command(
     /// <inheritdoc />
     public PipeTarget StandardErrorPipe { get; } = standardErrorPipe;
 
+    /// <inheritdoc />
+    public Action<Process>? ProcessStartedCallback { get; } = processStartedCallback;
+
     /// <summary>
     /// Creates a copy of this command, setting the target file path to the specified value.
     /// </summary>
@@ -80,7 +86,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -101,7 +108,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -147,7 +155,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -164,7 +173,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -196,7 +206,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -226,7 +237,8 @@ public partial class Command(
             validation,
             StandardInputPipe,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -243,7 +255,8 @@ public partial class Command(
             Validation,
             source,
             StandardOutputPipe,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -260,7 +273,8 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             target,
-            StandardErrorPipe
+            StandardErrorPipe,
+            ProcessStartedCallback
         );
 
     /// <summary>
@@ -277,7 +291,26 @@ public partial class Command(
             Validation,
             StandardInputPipe,
             StandardOutputPipe,
-            target
+            target,
+            ProcessStartedCallback
+        );
+
+    /// <summary>
+    /// Creates a copy of this command, setting the processor affinity to the specified value.
+    /// </summary>
+    [Pure]
+    public Command WithProcessStartedCallback(Action<Process> callback) =>
+        new(
+            TargetFilePath,
+            Arguments,
+            WorkingDirPath,
+            Credentials,
+            EnvironmentVariables,
+            Validation,
+            StandardInputPipe,
+            StandardOutputPipe,
+            StandardErrorPipe,
+            callback
         );
 
     /// <inheritdoc />

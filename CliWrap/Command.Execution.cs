@@ -317,6 +317,16 @@ public partial class Command
         // already be disposed by then.
         var processId = process.Id;
 
+        try
+        {
+            ProcessStartedCallback?.Invoke(process.NativeProcess);
+        }
+        catch
+        {
+            process.Kill();
+            throw;
+        }
+
         return new CommandTask<CommandResult>(
             ExecuteAsync(process, forcefulCancellationToken, gracefulCancellationToken),
             processId

@@ -253,4 +253,20 @@ public class ConfigurationSpecs
         original.Should().BeEquivalentTo(modified, o => o.Excluding(c => c.StandardErrorPipe));
         original.StandardErrorPipe.Should().NotBeSameAs(modified.StandardErrorPipe);
     }
+
+    [Fact]
+    public void I_can_configure_a_process_started_callback()
+    {
+        // Arrange
+        var original = Cli.Wrap("foo");
+
+        // Act
+        var modified = original.WithProcessStartedCallback(p => { });
+
+        // Assert
+        original
+            .Should()
+            .BeEquivalentTo(modified, o => o.Excluding(c => c.ProcessStartedCallback));
+        original.ProcessStartedCallback.Should().NotBeSameAs(modified.ProcessStartedCallback);
+    }
 }
